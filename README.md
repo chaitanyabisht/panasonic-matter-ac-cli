@@ -10,11 +10,19 @@ A modern, human-friendly Python CLI wrapper for `chip-tool` to control Matter-en
 - **Global Installation**: Install once and run `panasonic-ac` from any directory.
 
 ## 📋 Prerequisites
-1. **Linux**: Tested on Ubuntu/Debian.
-2. **chip-tool**: The official Matter reference controller.
-   ```bash
-   sudo snap install chip-tool
-   ```
+
+### 1. chip-tool (Matter SDK)
+This tool is a wrapper around the official Matter `chip-tool`. It must be installed and available in your system's `PATH`.
+
+**Installation options:**
+- **Ubuntu/Debian (Recommended):**
+  ```bash
+  sudo snap install chip-tool
+  ```
+- **From Source:** Follow the [Matter SDK (connectedhomeip)](https://github.com/project-chip/connectedhomeip/blob/master/docs/guides/BUILDING.md) instructions to build `chip-tool`.
+
+### 2. Linux Environment
+Tested primarily on Ubuntu/Debian. Requires Python 3.12+.
 
 ## 🛠️ Setup & Pairing
 
