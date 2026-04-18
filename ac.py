@@ -156,6 +156,9 @@ def pair(
     node_id: Optional[int] = typer.Option(None, "--id", help="Manually specify a Node ID (optional)")
 ):
     """Pair a new AC using its 11-digit code."""
+    # Remove dashes or spaces from the code
+    code = re.sub(r"\D", "", code)
+    
     if node_id is None:
         node_id = get_next_node_id()
         
