@@ -153,7 +153,8 @@ def get_next_node_id():
 def pair(
     code: str = typer.Argument(..., help="The 11-digit setup code from the AC sticker"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="A human-friendly name for this AC"),
-    node_id: Optional[int] = typer.Option(None, "--id", help="Manually specify a Node ID (optional)")
+    node_id: Optional[int] = typer.Option(None, "--id", help="Manually specify a Node ID (optional)"),
+    ip: Optional[str] = typer.Option(None, "--ip", help="Manually specify the IP address of the AC")
 ):
     """Pair a new AC using its 11-digit code."""
     # Remove dashes or spaces from the code
@@ -163,7 +164,13 @@ def pair(
         node_id = get_next_node_id()
         
     with Status(f"Commissioning new AC as Node ID {node_id}...", console=console):
-        run_chip_tool(["pairing", "code", str(node_id), code, "--bypass-attestation-verifier", "true"])
+        if ip:
+            # Use direct IP pairing (onnetwork node-id setup-pin-code --ip address)
+            # The manual code needs to be used as a PIN here, or use 'code' with --ip if supported
+            run_chip_tool(["pairing", "onnetwork", str(node_id), code, "--ip", ip, "--bypass-attestation-verifier", "true"])
+        else:
+            # Use discovery-based pairing
+            run_chip_tool(["pairing", "code", str(node_id), code, "--bypass-attestation-verifier", "true"])
     
     config = load_config()
     # Save the alias if provided, otherwise save the ID as its own name
