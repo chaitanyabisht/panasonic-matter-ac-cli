@@ -149,6 +149,23 @@ def get_next_node_id():
         return 101
     return max(int(id) for id in existing_ids) + 1
 
+def decode_manual_code(code: str) -> str:
+    """Decodes an 11-digit Manual Pairing Code into an 8-digit PIN."""
+    # Ensure code is exactly 11 digits
+    code = re.sub(r"\D", "", code)
+    if len(code) != 11:
+        raise ValueError("Manual code must be exactly 11 digits.")
+
+    d1 = int(code[0])
+    d2_6 = int(code[1:6])
+    d7_10 = int(code[6:10])
+    
+    passcode_low = d2_6 & 0x3FFF
+    passcode_high = d7_10
+    
+    passcode = (passcode_high << 14) | passcode_low
+    return f"{passcode:08d}"
+
 @app.command()
 def pair(
     code: str = typer.Argument(..., help="The 11-digit setup code from the AC sticker"),
@@ -157,20 +174,20 @@ def pair(
     ip: Optional[str] = typer.Option(None, "--ip", help="Manually specify the IP address of the AC")
 ):
     """Pair a new AC using its 11-digit code."""
-    # Remove dashes or spaces from the code
-    code = re.sub(r"\D", "", code)
+    # Remove dashes/spaces for storage but use original for decoding if needed
+    clean_code = re.sub(r"\D", "", code)
     
     if node_id is None:
         node_id = get_next_node_id()
         
     with Status(f"Commissioning new AC as Node ID {node_id}...", console=console):
         if ip:
-            # Use direct IP pairing (onnetwork node-id setup-pin-code --ip address)
-            # The manual code needs to be used as a PIN here, or use 'code' with --ip if supported
-            run_chip_tool(["pairing", "onnetwork", str(node_id), code, "--ip", ip, "--bypass-attestation-verifier", "true"])
+            # For direct IP, we MUST use the decoded 8-digit PIN
+            pin = decode_manual_code(clean_code)
+            run_chip_tool(["pairing", "onnetwork", str(node_id), pin, "--ip", ip, "--bypass-attestation-verifier", "true"])
         else:
-            # Use discovery-based pairing
-            run_chip_tool(["pairing", "code", str(node_id), code, "--bypass-attestation-verifier", "true"])
+            # For discovery, chip-tool handles the 11-digit code directly
+            run_chip_tool(["pairing", "code", str(node_id), clean_code, "--bypass-attestation-verifier", "true"])
     
     config = load_config()
     # Save the alias if provided, otherwise save the ID as its own name
