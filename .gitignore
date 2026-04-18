@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+.venv/
+.env
+
+# Project specific
+config.json
+ac-launcher
+
+# uv
+# uv.lock  <-- Removed from ignore to track it
