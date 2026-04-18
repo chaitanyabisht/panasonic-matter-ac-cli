@@ -55,7 +55,19 @@ def on(identifier: str):
     with Status(f"Turning ON AC {identifier}...", console=console):
         try:
             run_chip_tool(["onoff", "on", node_id, str(DEFAULT_ENDPOINT)])
+            
+            # Read current temp
+            t_out = run_chip_tool(["thermostat", "read", "local-temperature", node_id, str(DEFAULT_ENDPOINT)])
+            cur_match = re.search(r"LocalTemperature: (\d+)", t_out)
+            cur_temp = f"{int(cur_match.group(1))/100}°C" if cur_match else "Unknown"
+            
+            # Read target temp
+            tgt_out = run_chip_tool(["thermostat", "read", "occupied-cooling-setpoint", node_id, str(DEFAULT_ENDPOINT)])
+            tgt_match = re.search(r"OccupiedCoolingSetpoint: (\d+)", tgt_out)
+            tgt_temp = f"{int(tgt_match.group(1))/100}°C" if tgt_match else "Unknown"
+            
             console.print(f"[bold green]✔[/bold green] AC {identifier} is now [bold green]ON[/bold green].")
+            console.print(f"Room: [bold cyan]{cur_temp}[/bold cyan] | Target: [bold yellow]{tgt_temp}[/bold yellow]")
         except RuntimeError as e:
             console.print(f"[bold red]Error:[/bold red] {e}")
             raise typer.Exit(code=1)
