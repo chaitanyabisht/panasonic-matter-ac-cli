@@ -182,9 +182,9 @@ def pair(
         
     with Status(f"Commissioning new AC as Node ID {node_id}...", console=console):
         if ip:
-            # For direct IP, we MUST use the decoded 8-digit PIN
+            # For direct IP, we MUST use 'ethernet' command: node-id setup-pin-code ip-address
             pin = decode_manual_code(clean_code)
-            run_chip_tool(["pairing", "onnetwork", str(node_id), pin, "--ip", ip, "--bypass-attestation-verifier", "true"])
+            run_chip_tool(["pairing", "ethernet", str(node_id), pin, ip, "--bypass-attestation-verifier", "true"])
         else:
             # For discovery, chip-tool handles the 11-digit code directly
             run_chip_tool(["pairing", "code", str(node_id), clean_code, "--bypass-attestation-verifier", "true"])
