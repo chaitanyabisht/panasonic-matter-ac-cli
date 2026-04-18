@@ -55,8 +55,8 @@ def alias(name: str, node_id: int):
     save_config(config)
     console.print(f"[green]Success![/green] Assigned alias [bold]{name}[/bold] to Node ID [blue]{node_id}[/blue].")
 
-@app.command()
-def list():
+@app.command(name="list")
+def list_aliases():
     """List all saved AC aliases."""
     config = load_config()
     table = Table(title="Panasonic AC Aliases")
