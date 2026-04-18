@@ -149,9 +149,8 @@ def get_next_node_id():
         return 101
     return max(int(id) for id in existing_ids) + 1
 
-def decode_manual_code(code: str) -> str:
-    """Decodes an 11-digit Manual Pairing Code into an 8-digit PIN."""
-    # Ensure code is exactly 11 digits
+def decode_manual_code(code: str):
+    """Decodes an 11-digit Manual Pairing Code into PIN and Short Discriminator."""
     code = re.sub(r"\D", "", code)
     if len(code) != 11:
         raise ValueError("Manual code must be exactly 11 digits.")
@@ -160,11 +159,17 @@ def decode_manual_code(code: str) -> str:
     d2_6 = int(code[1:6])
     d7_10 = int(code[6:10])
     
+    # Extract Discriminator (Short version)
+    discriminator_high = d1 & 0x3
+    discriminator_low = d2_6 >> 14
+    short_discriminator = (discriminator_high << 2) | discriminator_low
+    
+    # Extract Passcode
     passcode_low = d2_6 & 0x3FFF
     passcode_high = d7_10
-    
     passcode = (passcode_high << 14) | passcode_low
-    return f"{passcode:08d}"
+    
+    return f"{passcode:08d}", short_discriminator
 
 @app.command()
 def pair(
@@ -182,9 +187,10 @@ def pair(
         
     with Status(f"Commissioning new AC as Node ID {node_id}...", console=console):
         if ip:
-            # For direct IP, we MUST use 'ethernet' command: node-id setup-pin-code ip-address
-            pin = decode_manual_code(clean_code)
-            run_chip_tool(["pairing", "ethernet", str(node_id), pin, ip, "--bypass-attestation-verifier", "true"])
+            # For direct IP, we MUST use 'ethernet' command: node-id setup-pin-code discriminator ip-address port
+            pin, disc = decode_manual_code(clean_code)
+            # Port 5540 is default for Matter
+            run_chip_tool(["pairing", "ethernet", str(node_id), pin, str(disc), ip, "5540", "--bypass-attestation-verifier", "true"])
         else:
             # For discovery, chip-tool handles the 11-digit code directly
             run_chip_tool(["pairing", "code", str(node_id), clean_code, "--bypass-attestation-verifier", "true"])
