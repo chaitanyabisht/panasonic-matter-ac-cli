@@ -25,7 +25,11 @@ Before using this tool, your AC **must already be connected to your Wi-Fi networ
 Locate the Matter QR sticker on your AC unit. You will need the **11-digit numeric setup code**.
 
 ### 3. Pair the AC with the CLI
-Once the AC is on your Wi-Fi, simply run:
+Panasonic ACs have a specific pairing cycle:
+1.  **Trigger SE Mode**: Hold the **SMART** button for 5 seconds until "SE" appears. Note that the AC will temporarily disconnect from Wi-Fi.
+2.  **Wait for Reconnection**: Wait until the "SE" display disappears and the AC reconnects to your Wi-Fi network.
+3.  **Run Command**: Immediately run the pairing command. The AC opens a short Matter commissioning window only after it reconnects to the network.
+
 ```bash
 panasonic-ac pair <11-DIGIT-CODE> --name <ALIAS>
 # Example: panasonic-ac pair 1234-567-8901 --name bedroom
