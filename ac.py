@@ -40,9 +40,13 @@ def run_chip_tool(args: list[str]):
             [CHIP_TOOL] + args,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            timeout=60
         )
         return result.stdout
+    except subprocess.TimeoutExpired:
+        console.print("[bold red]Error:[/bold red] chip-tool command timed out after 60s.")
+        raise typer.Exit(code=1)
     except subprocess.CalledProcessError as e:
         console.print(f"[bold red]Error running chip-tool:[/bold red] {e.stderr or e.output}")
         raise typer.Exit(code=1)
@@ -187,10 +191,9 @@ def pair(
         
     with Status(f"Commissioning new AC as Node ID {node_id}...", console=console):
         if ip:
-            # For direct IP, we MUST use 'ethernet' command: node-id setup-pin-code discriminator ip-address port
+            # Positional arguments for onnetwork: node-id setup-pin-code [ip-address] [port]
             pin, disc = decode_manual_code(clean_code)
-            # Port 5540 is default for Matter
-            run_chip_tool(["pairing", "ethernet", str(node_id), pin, str(disc), ip, "5540", "--bypass-attestation-verifier", "true"])
+            run_chip_tool(["pairing", "onnetwork", str(node_id), pin, ip, "5540", "--bypass-attestation-verifier", "true"])
         else:
             # For discovery, chip-tool handles the 11-digit code directly
             run_chip_tool(["pairing", "code", str(node_id), clean_code, "--bypass-attestation-verifier", "true"])
