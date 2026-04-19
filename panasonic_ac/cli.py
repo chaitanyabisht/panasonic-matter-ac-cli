@@ -191,6 +191,8 @@ def info(identifier: str):
         results["RSSI"] = read_attr("wifinetworkdiagnostics", "rssi")
         results["Uptime"] = read_attr("generaldiagnostics", "up-time")
         results["Reboots"] = read_attr("generaldiagnostics", "reboot-count")
+        results["Humidity"] = read_attr("relativehumiditymeasurement", "measured-value", "1")
+        results["MfgDate"] = read_attr("basicinformation", "manufacturing-date")
 
     table = Table(title=f"Hardware Diagnostics: {identifier}", show_header=False, padding=(0, 1), box=box.ROUNDED)
     table.add_column(style="dim", width=20)
@@ -198,6 +200,15 @@ def info(identifier: str):
     table.add_row("Model", f"[bold]{results['Model']}[/bold]")
     table.add_row("Serial", results["Serial"])
     table.add_row("Firmware", results["Firmware"])
+    table.add_row("Mfg Date", results["MfgDate"])
+    
+    if results["Humidity"] != "Unknown":
+        try:
+            h_val = int(results["Humidity"]) / 100
+            table.add_row("Humidity", f"[bold blue]{h_val}%[/bold blue]")
+        except ValueError:
+            pass
+
     table.add_row("Wi-Fi Signal (RSSI)", f"[bold cyan]{results['RSSI']} dBm[/bold cyan]")
     
     if results["Uptime"] != "Unknown":
