@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.status import Status
+from rich import box
 from .core import (
     check_chip_tool,
     load_config,
@@ -155,13 +156,15 @@ def status(identifier: str):
             console.print(f"[bold red]Error:[/bold red] {e}")
             raise typer.Exit(code=1)
             
-    table = Table(show_header=False, padding=(0, 2))
+    table = Table(title=f"Status Report: {identifier}", show_header=False, padding=(0, 1), box=box.ROUNDED)
+    table.add_column(style="dim", width=20)
+    table.add_column(width=20)
     table.add_row("Power State", f"[bold]{power}[/bold]", style="green" if power == "ON" else "red")
     table.add_row("Current Temp", f"[bold cyan]{cur_temp}[/bold cyan]")
     table.add_row("Target Temp", f"[bold yellow]{tgt_temp}[/bold yellow]")
     table.add_row("Wi-Fi Signal", f"[bold magenta]{rssi}[/bold magenta]")
     
-    console.print(Panel(table, title=f"Status Report: {identifier}", expand=False))
+    console.print(table)
 
 @app.command()
 def info(identifier: str):
@@ -189,7 +192,9 @@ def info(identifier: str):
         results["Uptime"] = read_attr("generaldiagnostics", "up-time")
         results["Reboots"] = read_attr("generaldiagnostics", "reboot-count")
 
-    table = Table(show_header=False, padding=(0, 2))
+    table = Table(title=f"Hardware Diagnostics: {identifier}", show_header=False, padding=(0, 1), box=box.ROUNDED)
+    table.add_column(style="dim", width=20)
+    table.add_column(width=20)
     table.add_row("Model", f"[bold]{results['Model']}[/bold]")
     table.add_row("Serial", results["Serial"])
     table.add_row("Firmware", results["Firmware"])
@@ -206,7 +211,7 @@ def info(identifier: str):
         
     table.add_row("Reboot Count", f"[bold yellow]{results['Reboots']}[/bold yellow]")
     
-    console.print(Panel(table, title=f"Hardware Diagnostics: {identifier}", expand=False))
+    console.print(table)
 
 @app.command()
 def pair(
