@@ -49,7 +49,8 @@ panasonic-ac pair <11-DIGIT-CODE> --name <ALIAS>
 | :--- | :--- |
 | `panasonic-ac on bedroom` | Turn AC ON |
 | `panasonic-ac off bedroom` | Turn AC OFF |
-| `panasonic-ac status bedroom` | View full status report (Power, Room Temp, Target) |
+| `panasonic-ac status bedroom` | View full status (Power, Temp, Target, Wi-Fi RSSI) |
+| `panasonic-ac info bedroom` | View hardware diagnostics (Model, Serial, Reboot Count, etc) |
 | `panasonic-ac set bedroom 24` | Set target temperature to 24°C |
 | `panasonic-ac fan bedroom 5` | Set fan mode (1:Low, 2:Med, 3:High, 5:Auto) |
 | `panasonic-ac temp bedroom` | Quick read of the room temperature sensor |

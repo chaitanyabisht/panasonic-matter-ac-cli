@@ -146,6 +146,11 @@ def status(identifier: str):
             tgt_out = run_chip_tool(["thermostat", "read", "occupied-cooling-setpoint", node_id, str(DEFAULT_ENDPOINT)])
             tgt_match = re.search(r"OccupiedCoolingSetpoint: (\d+)", tgt_out)
             tgt_temp = f"{int(tgt_match.group(1))/100}°C" if tgt_match else "Unknown"
+            
+            # Read RSSI
+            rssi_out = run_chip_tool(["wifinetworkdiagnostics", "read", "rssi", node_id, "0"])
+            rssi_match = re.search(r"RSSI: (-?\d+)", rssi_out)
+            rssi = f"{rssi_match.group(1)} dBm" if rssi_match else "Unknown"
         except RuntimeError as e:
             console.print(f"[bold red]Error:[/bold red] {e}")
             raise typer.Exit(code=1)
@@ -154,8 +159,54 @@ def status(identifier: str):
     table.add_row("Power State", f"[bold]{power}[/bold]", style="green" if power == "ON" else "red")
     table.add_row("Current Temp", f"[bold cyan]{cur_temp}[/bold cyan]")
     table.add_row("Target Temp", f"[bold yellow]{tgt_temp}[/bold yellow]")
+    table.add_row("Wi-Fi Signal", f"[bold magenta]{rssi}[/bold magenta]")
     
     console.print(Panel(table, title=f"Status Report: {identifier}", expand=False))
+
+@app.command()
+def info(identifier: str):
+    """Get detailed hardware and network diagnostics."""
+    node_id = resolve_id(identifier)
+    
+    with Status("Gathering diagnostics...", console=console):
+        results = {}
+        
+        # Helper to read single attribute
+        def read_attr(cluster, attr, endpoint="0"):
+            try:
+                out = run_chip_tool([cluster, "read", attr, node_id, endpoint])
+                m = re.search(f"{attr.replace('-', '')}: (.*)", out, re.IGNORECASE)
+                if m:
+                    return m.group(1).strip().strip('"')
+            except Exception:
+                pass
+            return "Unknown"
+
+        results["Model"] = read_attr("basicinformation", "product-name")
+        results["Serial"] = read_attr("basicinformation", "serial-number")
+        results["Firmware"] = read_attr("basicinformation", "software-version-string")
+        results["RSSI"] = read_attr("wifinetworkdiagnostics", "rssi")
+        results["Uptime"] = read_attr("generaldiagnostics", "up-time")
+        results["Reboots"] = read_attr("generaldiagnostics", "reboot-count")
+
+    table = Table(show_header=False, padding=(0, 2))
+    table.add_row("Model", f"[bold]{results['Model']}[/bold]")
+    table.add_row("Serial", results["Serial"])
+    table.add_row("Firmware", results["Firmware"])
+    table.add_row("Wi-Fi Signal (RSSI)", f"[bold cyan]{results['RSSI']} dBm[/bold cyan]")
+    
+    if results["Uptime"] != "Unknown":
+        try:
+            seconds = int(results["Uptime"])
+            hours = seconds // 3600
+            days = hours // 24
+            table.add_row("Uptime", f"[bold green]{days}d {hours % 24}h {(seconds // 60) % 60}m[/bold green]")
+        except ValueError:
+            table.add_row("Uptime", results["Uptime"])
+        
+    table.add_row("Reboot Count", f"[bold yellow]{results['Reboots']}[/bold yellow]")
+    
+    console.print(Panel(table, title=f"Hardware Diagnostics: {identifier}", expand=False))
 
 @app.command()
 def pair(
